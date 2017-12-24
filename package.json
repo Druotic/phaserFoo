@@ -1,0 +1,27 @@
+{
+  "name": "phaserfoo",
+  "version": "1.0.0",
+  "description": "just playing with phaser, don't use this trash code. You've been warned.",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack-dev-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Druotic/phaserFoo.git"
+  },
+  "author": "James Beavers",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Druotic/phaserFoo/issues"
+  },
+  "homepage": "https://github.com/Druotic/phaserFoo#readme",
+  "devDependencies": {
+    "copy-webpack-plugin": "^4.3.0",
+    "webpack": "^3.10.0",
+    "webpack-dev-server": "^2.9.7"
+  },
+  "dependencies": {
+    "phaser-ce": "^2.9.3"
+  }
+}
