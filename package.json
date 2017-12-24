@@ -4,7 +4,8 @@
   "description": "just playing with phaser, don't use this trash code. You've been warned.",
   "main": "index.js",
   "scripts": {
-    "start": "webpack-dev-server"
+    "start": "webpack-dev-server",
+    "gh-pages": "webpack --output-path ."
   },
   "repository": {
     "type": "git",
