@@ -4,7 +4,7 @@
   "description": "just playing with phaser, don't use this trash code. You've been warned.",
   "main": "index.js",
   "scripts": {
-    "start": "webpack-dev-server",
+    "start": "webpack-dev-server --open",
     "gh-pages": "webpack --output-path ."
   },
   "repository": {
@@ -23,6 +23,8 @@
     "webpack-dev-server": "^2.9.7"
   },
   "dependencies": {
-    "phaser-ce": "^2.9.3"
+    "phaser-ce": "^2.9.3",
+    "redux": "^3.7.2",
+    "redux-saga": "^0.16.0"
   }
 }
