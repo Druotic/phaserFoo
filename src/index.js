@@ -4,7 +4,7 @@
 const { Phaser } = require('./globals')
 const { Game } = Phaser
 
-let sprite, fireball, cast;
+let sprite, fireball, cast, grenadeCast;
 
 function preload () {
   //  37x45 is the size of each frame
@@ -12,12 +12,14 @@ function preload () {
   //  blank frames at the end, so we tell the loader how many to load
   game.load.spritesheet('wizard', 'assets/sprites/wizard_sheet.png', 73, 73, 13);
   game.load.spritesheet('fireball', 'assets/sprites/fireball_sheet.png', 28, 19, 4);
+  game.load.image('grenade', 'assets/sprites/grenade.png');
   game.stage.backgroundColor = "#444444";
 }
 
 function isCasting(sprite) {
   const currentAnimation = sprite.animations.currentAnim;
-  return currentAnimation.name === 'cast' && currentAnimation.isPlaying;
+  return ['cast', 'grenadeCast'].includes(currentAnimation.name)  &&
+    currentAnimation.isPlaying
 }
 
 function isArrowDown (keyboard) {
@@ -58,6 +60,8 @@ function onKeyDown (event) {
     sprite.animations.play('walk');
   else if (keyCode === Phaser.Keyboard.SPACEBAR) {
     cast = sprite.animations.play('cast');
+  } else if (keyCode === Phaser.Keyboard.G) {
+    grenadeCast = sprite.animations.play('grenadeCast')
   }
 }
 
@@ -66,6 +70,8 @@ function create () {
   const idle = sprite.animations.add('idle', [0,1,2], 10, true)
   const walk = sprite.animations.add('walk', [3,4,5,6], 10, true)
   const cast = sprite.animations.add('cast', [7,8,9,10,11,12], 10, false)
+  // placeholder
+  const grenadeCast = sprite.animations.add('grenadeCast', [7,8,9,10,11,12], 10, false)
 
   idle.play()
 
@@ -93,7 +99,7 @@ function processArrowKeys(sprite, keyboard) {
   }
 }
 
-function spawnFireball (sprite, cast) {
+function spawnFireball (sprite) {
   const fireball = game.add.sprite(sprite.x+sprite.scale.x*30, sprite.y+10, 'fireball');
   const moving = fireball.animations.add('moving', [0,1,2,3], 6, true)
   fireball.anchor.setTo(0.5,0.5)
@@ -108,29 +114,81 @@ function spawnFireball (sprite, cast) {
   tween.start()
 }
 
+const grenadeGroups = []
+
+let grenade, hiddenFloor
+
+function spawnGrenade(sprite) {
+  const collisionGroup = game.add.group()
+  grenade = game.add.sprite(sprite.x, sprite.y-10, 'grenade')
+  hiddenFloor = game.add.sprite(0, sprite.bottom)
+
+  hiddenFloor.width = game.world.width
+  hiddenFloor.height = 10
+  grenade.anchor.setTo(0.5,0.5)
+
+  collisionGroup.addMultiple([grenade, hiddenFloor])
+
+  game.physics.arcade.enable(grenade);
+  game.physics.arcade.enable(hiddenFloor);
+
+  hiddenFloor.body.immovable = true;
+  
+  grenade.body.velocity.setTo(sprite.scale.x*120, -200);
+  grenade.body.bounce.set(0.7)
+  grenade.body.gravity.set(0, 600)
+  grenade.body.drag.x = 40
+  grenadeGroups.push(collisionGroup)
+}
+
+function collisionHandler (grenade, hiddenFloor) {
+  if (grenade.body.velocity.x === 0) {
+    grenade.kill()
+    hiddenFloor.kill()
+  }
+}
+
 let spawnedFireballThisCast;
 
 function update() {
 
+  for (const group of grenadeGroups) {
+    const [grenade, hiddenFloor] = group.children;
+    game.physics.arcade.collide(grenade, hiddenFloor, collisionHandler)
+  }
+
   if (isCasting(sprite)) {
-    if (cast.currentFrame.index === 10) {
+    if (cast && cast.currentFrame.index === 10) {
       if (!spawnedFireballThisCast) {
-        spawnFireball(sprite, cast)
+        spawnFireball(sprite)
         spawnedFireballThisCast = true;
+      }
+    } else if (grenadeCast && grenadeCast.currentFrame.index === 10) {
+      if (!spawnedGrenadeThisCast) {
+        spawnGrenade(sprite, grenadeCast)
+        spawnedGrenadeThisCast = true;
       }
     }
     return;
   }
   spawnedFireballThisCast = false;
+  spawnedGrenadeThisCast = false;
   const idle = tryIdle(sprite)
   if (!idle)
     sprite.animations.play('walk');
 
   processArrowKeys(sprite, game.input.keyboard);
+
 }
 
 function render () {
   game.debug.spriteInfo(sprite, 32, 32);
+
+  //for (const group of grenadeGroups) {
+    //const [grenade, hiddenFloor] = group.children
+    //game.debug.body(grenade);
+    //game.debug.body(hiddenFloor);
+  //}
 }
 
 const game = new Game(800, 600, Phaser.CANVAS, 'phaserFoo', {
