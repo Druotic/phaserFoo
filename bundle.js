@@ -73,13 +73,14 @@
 const { Phaser } = __webpack_require__(1)
 const { Game } = Phaser
 
-let sprite;
+let sprite, fireball, cast;
 
 function preload () {
   //  37x45 is the size of each frame
   //  There are 18 frames in the PNG - you can leave this value blank if the frames fill up the entire PNG, but in this case there are some
   //  blank frames at the end, so we tell the loader how many to load
   game.load.spritesheet('wizard', 'assets/sprites/wizard_sheet.png', 73, 73, 13);
+  game.load.spritesheet('fireball', 'assets/sprites/fireball_sheet.png', 28, 19, 4);
   game.stage.backgroundColor = "#444444";
 }
 
@@ -125,12 +126,7 @@ function onKeyDown (event) {
   if (ARROW_KEYS.includes(keyCode))
     sprite.animations.play('walk');
   else if (keyCode === Phaser.Keyboard.SPACEBAR) {
-    const cast = sprite.animations.play('cast');
-    cast.onComplete.add((sprite) => {
-      const idle = tryIdle(sprite)
-      if(!idle)
-        sprite.animations.play('walk');
-    });
+    cast = sprite.animations.play('cast');
   }
 }
 
@@ -166,10 +162,38 @@ function processArrowKeys(sprite, keyboard) {
   }
 }
 
+function spawnFireball (sprite, cast) {
+  const fireball = game.add.sprite(sprite.x+sprite.scale.x*30, sprite.y+10, 'fireball');
+  const moving = fireball.animations.add('moving', [0,1,2,3], 6, true)
+  fireball.anchor.setTo(0.5,0.5)
+  fireball.scale.x = sprite.scale.x
+
+  moving.play()
+
+  const destinationX = (fireball.scale.x < 0) ? 0 : game.world.width
+
+  const tween = game.add.tween(fireball).to({x: destinationX}, 5000, Phaser.Easing.Linear.None);
+  tween.onComplete.add((tween) => fireball.destroy());
+  tween.start()
+}
+
+let spawnedFireballThisCast;
+
 function update() {
 
-  if (isCasting(sprite))
+  if (isCasting(sprite)) {
+    if (cast.currentFrame.index === 10) {
+      if (!spawnedFireballThisCast) {
+        spawnFireball(sprite, cast)
+        spawnedFireballThisCast = true;
+      }
+    }
     return;
+  }
+  spawnedFireballThisCast = false;
+  const idle = tryIdle(sprite)
+  if (!idle)
+    sprite.animations.play('walk');
 
   processArrowKeys(sprite, game.input.keyboard);
 }
