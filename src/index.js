@@ -13,6 +13,7 @@ function preload () {
   game.load.spritesheet('wizard', 'assets/sprites/wizard_sheet.png', 73, 73, 13);
   game.load.spritesheet('fireball', 'assets/sprites/fireball_sheet.png', 28, 19, 4);
   game.load.image('grenade', 'assets/sprites/grenade.png');
+  game.load.spritesheet('explosion', 'assets/sprites/explosion_sheet.png', 64,64,12);
   game.stage.backgroundColor = "#444444";
 }
 
@@ -64,14 +65,13 @@ function onKeyDown (event) {
     grenadeCast = sprite.animations.play('grenadeCast')
   }
 }
-
 function create () {
   sprite = game.add.sprite(game.world.centerX, game.world.centerY, 'wizard');
   const idle = sprite.animations.add('idle', [0,1,2], 10, true)
-  const walk = sprite.animations.add('walk', [3,4,5,6], 10, true)
-  const cast = sprite.animations.add('cast', [7,8,9,10,11,12], 10, false)
+  sprite.animations.add('walk', [3,4,5,6], 10, true)
+  sprite.animations.add('cast', [7,8,9,10,11,12], 10, false)
   // placeholder
-  const grenadeCast = sprite.animations.add('grenadeCast', [7,8,9,10,11,12], 10, false)
+  sprite.animations.add('grenadeCast', [7,8,9,10,11,12], 10, false)
 
   idle.play()
 
@@ -116,12 +116,11 @@ function spawnFireball (sprite) {
 
 const grenadeGroups = []
 
-let grenade, hiddenFloor
 
 function spawnGrenade(sprite) {
   const collisionGroup = game.add.group()
-  grenade = game.add.sprite(sprite.x, sprite.y-10, 'grenade')
-  hiddenFloor = game.add.sprite(0, sprite.bottom)
+  const grenade = game.add.sprite(sprite.x, sprite.y-10, 'grenade')
+  const hiddenFloor = game.add.sprite(0, sprite.bottom)
 
   hiddenFloor.width = game.world.width
   hiddenFloor.height = 10
@@ -138,11 +137,21 @@ function spawnGrenade(sprite) {
   grenade.body.bounce.set(0.7)
   grenade.body.gravity.set(0, 600)
   grenade.body.drag.x = 40
+  grenade.body.angularVelocity = 720
+  grenade.body.angularDrag = 250
   grenadeGroups.push(collisionGroup)
 }
 
 function collisionHandler (grenade, hiddenFloor) {
   if (grenade.body.velocity.x === 0) {
+    const explosion = game.add.sprite(grenade.x, grenade.y, 'explosion')
+    const explosionAnim = explosion.animations.add('explosion', [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 16)
+    explosion.anchor.setTo(0.5,0.5)
+    explosion.scale.x = 3
+    explosion.scale.y = 3
+    explosionAnim.onComplete.add((sprite) => sprite.destroy())
+    explosionAnim.play()
+
     grenade.kill()
     hiddenFloor.kill()
   }
@@ -182,7 +191,7 @@ function update() {
 }
 
 function render () {
-  game.debug.spriteInfo(sprite, 32, 32);
+  //game.debug.spriteInfo(sprite, 32, 32);
 
   //for (const group of grenadeGroups) {
     //const [grenade, hiddenFloor] = group.children
